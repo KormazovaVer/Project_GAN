@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -33,15 +33,10 @@ class MonetDataset(Dataset):
     def __init__(self, root_monet, root_photo, transform=None):
         self.root_monet = root_monet
         self.root_photo = root_photo
-        self.transform = transform if transform else None   # используем transform, если он есть
+        self.transform = transform
 
         self.monet_images = os.listdir(root_monet)
         self.photo_images = os.listdir(root_photo)
-
-        if not self.monet_images:
-            raise ValueError("No images found in root_monet directory")
-        if not self.photo_images:
-            raise ValueError("No images found in root_photo directory")
 
         self.monet_img_len = len(self.monet_images)
         self.photo_img_len = len(self.photo_images)
@@ -51,29 +46,16 @@ class MonetDataset(Dataset):
         return self.images_len
 
     def __getitem__(self, idx):
-        monet_img_path = os.path.join(self.root_monet, self.monet_images[idx % self.monet_img_len])
-        photo_img_path = os.path.join(self.root_photo, self.photo_images[idx % self.photo_img_len])
+        monet_img = os.path.join(self.root_monet, self.monet_images[idx % self.monet_img_len])
+        photo_img = os.path.join(self.root_photo, self.photo_images[idx % self.photo_img_len])
 
-        try:
-            monet_img = np.array(Image.open(monet_img_path).convert("RGB"))
-        except (FileNotFoundError, UnidentifiedImageError) as e:
-            print(f"Error loading monet image {monet_img_path}: {e}")
-            return None, None  # Или другое подходящее значение
-
-        try:
-            photo_img = np.array(Image.open(photo_img_path).convert("RGB"))
-        except (FileNotFoundError, UnidentifiedImageError) as e:
-            print(f"Error loading photo image {photo_img_path}: {e}")
-            return None, None  # Или другое подходящее значение
+        monet_img = np.array(Image.open(monet_img).convert("RGB"))
+        photo_img = np.array(Image.open(photo_img).convert("RGB"))
 
         if self.transform:
-            augmentation = self.transform(image=photo_img, image0=monet_img)  # аугментация в albumentations
+            augmentation = self.transform(image=photo_img, image0=monet_img) # аугментация в albumentations
             photo_img = augmentation['image']
             monet_img = augmentation['image0']
-
-        # Преобразование в тензоры PyTorch и перемещение размерностей (HWC -> CHW)
-        monet_img = torch.from_numpy(monet_img).permute(2, 0, 1).float()   # HWC -> CHW
-        photo_img = torch.from_numpy(photo_img).permute(2, 0, 1).float()   # HWC -> CHW
 
         return monet_img, photo_img
 
