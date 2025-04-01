@@ -25,7 +25,11 @@
 1. Клонируйте репозиторий:
 
    ```bash
+<<<<<<< HEAD
    git clone https://github.com/KormazovaVer/Project_GAN
+=======
+   git clone https://github.com/KormazovaVer/Project_GAN/
+>>>>>>> eea7fa92646bc4126adce1f37f14f3cf8d954c2c
    cd Project_GAN
    
 2. Создайте виртуальное окружение (рекомендуется):
